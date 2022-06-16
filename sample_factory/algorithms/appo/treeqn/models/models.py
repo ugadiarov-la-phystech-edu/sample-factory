@@ -1,20 +1,11 @@
-import random
-
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 
-from sample_factory.algorithms.appo.treeqn.utils.pytorch_utils import View, nn_init
+from sample_factory.algorithms.appo.treeqn.utils.pytorch_utils import nn_init
 from sample_factory.algorithms.appo.treeqn.utils.einsum import einsum
 from sample_factory.algorithms.appo.treeqn.models.transitions import build_transition_fn, MLPRewardFn
-from sample_factory.algorithms.appo.treeqn.models.encoding import atari_encoder, push_encoder, navigation_encoder
 from sample_factory.algorithms.appo.treeqn.utils.pytorch_utils import logsumexp
-
-USE_CUDA = torch.cuda.is_available()
-dtype = torch.cuda.FloatTensor if USE_CUDA else torch.FloatTensor
-device = torch.device('cuda' if USE_CUDA else 'cpu')
 
 
 class TreeQNPolicy(nn.Module):
@@ -213,36 +204,3 @@ class TreeQNPolicy(nn.Module):
         backup_values = backup_values.view(batch_size, self.num_actions)
 
         return backup_values
-
-
-class DQNPolicy(TreeQNPolicy):
-    """
-    Vanilla DQN - just fully connected after conv encoder
-    """
-
-    def __init__(self, *args, extra_layers=0, **kwargs):
-        super(DQNPolicy, self).__init__(*args, **kwargs)
-        # Just to make sure that calculating number of parameters is correct
-        self.transition_fun = None
-        self.value_fn = None
-
-        self.q_fn = nn.Linear(self.embedding_dim, self.num_actions)
-
-        self.extra_layers = extra_layers
-        if extra_layers > 0:
-            self.transition_fun = \
-                nn.init.xavier_normal(nn.Parameter(torch.Tensor(self.embedding_dim, self.embedding_dim)))
-
-    def planning(self, x):
-        tree_result = {
-            "embeddings": [x],
-        }
-
-        if self.extra_layers > 0:
-            for i in range(self.extra_layers):
-                x = x + self.transition_nonlin(einsum("ij,ja->ia", x, self.transition_fun))
-                x = x / x.pow(2).sum(-1, keepdim=True).sqrt()
-
-        q = self.q_fn(x)
-
-        return q, tree_result

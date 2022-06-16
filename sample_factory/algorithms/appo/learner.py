@@ -957,8 +957,8 @@ class LearnerWorker:
 
         # this caused numerical issues on some versions of PyTorch with second moment reaching infinity
         adam_max_second_moment = 0.0
-        for key, tensor_state in self.optimizer.state.items():
-            adam_max_second_moment = max(tensor_state['exp_avg_sq'].max().item(), adam_max_second_moment)
+        # for key, tensor_state in self.optimizer.state.items():
+        #     adam_max_second_moment = max(tensor_state['exp_avg_sq'].max().item(), adam_max_second_moment)
         stats.adam_max_second_moment = adam_max_second_moment
 
         version_diff = (var.curr_policy_version - var.mb.policy_version)[var.mb.policy_id == self.policy_id]
@@ -989,7 +989,7 @@ class LearnerWorker:
 
                 for param_group in self.optimizer.param_groups:
                     param_group['lr'] = self.cfg.learning_rate
-                    param_group['betas'] = (self.cfg.adam_beta1, self.cfg.adam_beta2)
+                    # param_group['betas'] = (self.cfg.adam_beta1, self.cfg.adam_beta2)
                     log.debug('Updated optimizer lr to value %.7f, betas: %r', param_group['lr'], param_group['betas'])
 
                 self.new_cfg = None
@@ -1074,11 +1074,17 @@ class LearnerWorker:
             if self.aux_loss_module is not None:
                 params += list(self.aux_loss_module.parameters())
 
-            self.optimizer = torch.optim.Adam(
+            # self.optimizer = torch.optim.Adam(
+            #     params,
+            #     self.cfg.learning_rate,
+            #     betas=(self.cfg.adam_beta1, self.cfg.adam_beta2),
+            #     eps=self.cfg.adam_eps,
+            # )
+
+            self.optimizer = torch.optim.RMSprop(
                 params,
                 self.cfg.learning_rate,
-                betas=(self.cfg.adam_beta1, self.cfg.adam_beta2),
-                eps=self.cfg.adam_eps,
+                eps=self.cfg.adam_eps
             )
 
             self.load_from_checkpoint(self.policy_id)

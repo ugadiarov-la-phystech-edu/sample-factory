@@ -1,22 +1,18 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.nn import Parameter
 import numpy as np
 
 from sample_factory.algorithms.appo.treeqn.utils.pytorch_utils import View, nn_init
 
-USE_CUDA = torch.cuda.is_available()
-dtype = torch.cuda.FloatTensor if USE_CUDA else torch.FloatTensor
-
 
 def build_transition_fn(name, embedding_dim, nonlin=nn.Tanh(), num_actions=3, kernel_size=None):
     if name == "matrix":
-        transition_fun = Parameter(torch.Tensor(embedding_dim, embedding_dim, num_actions).type(dtype))
+        transition_fun = Parameter(torch.zeros(embedding_dim, embedding_dim, num_actions, dtype=torch.float32))
         return nn.init.xavier_normal(transition_fun)
     elif name == "two_layer":
         transition_fun1 = nn.Linear(embedding_dim, embedding_dim)
-        transition_fun2 = Parameter(torch.Tensor(embedding_dim, embedding_dim, num_actions).type(dtype))
+        transition_fun2 = Parameter(torch.zeros(embedding_dim, embedding_dim, num_actions, dtype=torch.float32))
         return transition_fun1, nn.init.xavier_normal(transition_fun2),
     else:
         raise ValueError

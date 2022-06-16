@@ -7,7 +7,6 @@ Created on Tue Apr 18 14:04:33 2017
 """
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 import numpy as np
 from numbers import Number
 import math
@@ -79,7 +78,7 @@ def ortho_init(tensor, scale=1.0):
     q = u if u.shape == flat_shape else v  # pick the one with the correct shape
     q = q.reshape(shape)
     w = (scale * q[:shape[0], :shape[1]]).astype(np.float32)
-    tensor.copy_(torch.FloatTensor(w))
+    tensor.copy_(torch.tensor(w, dtype=torch.float32))
     return tensor
 
 
@@ -87,11 +86,3 @@ def nn_init(module, w_init=ortho_init, w_scale=1.0, b_init=nn.init.constant, b_s
     w_init(module.weight, w_scale)
     b_init(module.bias, b_scale)
     return module
-
-USE_CUDA = torch.cuda.is_available()
-
-def cudify(x):
-    if USE_CUDA:
-        return x.cuda()
-    else:
-        return x

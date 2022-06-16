@@ -1,6 +1,5 @@
 import torch
 import torch.nn.functional as F
-from sample_factory.algorithms.appo.treeqn.utils.pytorch_utils import cudify
 import os
 from datetime import datetime
 
@@ -46,11 +45,11 @@ def build_sequences(sequences, masks, nenvs, nsteps, depth, return_mask=False, o
 
 def get_paths(tree, actions, batch_size, num_actions):
     # gets the parts of the tree corresponding to actions taken
-    action_indices = cudify(torch.zeros_like(actions[:,0]).long())
+    action_indices = torch.zeros_like(actions[:,0]).long()
     output = []
     for i, x in enumerate(tree):
         action_indices = action_indices * num_actions + actions[:, i]
-        batch_indices = cudify(torch.arange(0, batch_size).long() * x.size(0) // batch_size) + action_indices
+        batch_indices = torch.arange(0, batch_size).long() * x.size(0) // batch_size + action_indices
         output.append(x[batch_indices])
     return output
 
@@ -60,10 +59,10 @@ def get_subtree(tree, actions, batch_size, num_actions):
     action_indices = actions[:,0]
     output = []
     for i, x in enumerate(tree[1:]):
-        batch_starts = cudify(torch.arange(0, batch_size) * x.size(0) / batch_size)
+        batch_starts = torch.arange(0, batch_size) * x.size(0) / batch_size
         indices = []
         for b in range(batch_size):
-            indices.append(cudify(torch.arange(action_indices[b] * num_actions**i, (action_indices[b]+1) * num_actions**i)) + batch_starts[b])
+            indices.append(torch.arange(action_indices[b] * num_actions**i, (action_indices[b]+1) * num_actions**i) + batch_starts[b])
         indices = torch.cat(indices).long()
         output.append(x[indices])
     return output
