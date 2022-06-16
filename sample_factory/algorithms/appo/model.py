@@ -1,3 +1,5 @@
+import functools
+
 import torch
 from torch import nn
 
@@ -7,6 +9,7 @@ from sample_factory.algorithms.appo.model_utils import create_encoder, create_co
 from sample_factory.algorithms.utils.action_distributions import sample_actions_log_probs, is_continuous_action_space
 from sample_factory.utils.timing import Timing
 from sample_factory.utils.utils import AttrDict
+from sample_factory.algorithms.appo.treeqn.models.models import TreeQNPolicy
 
 
 class _ActorCriticBase(nn.Module):
@@ -70,11 +73,32 @@ class _ActorCriticSharedWeights(_ActorCriticBase):
         self.cores = [self.core]
 
         core_out_size = self.core.get_core_out_size()
-        self.critic_linear = nn.Linear(core_out_size, 1)
+        # self.critic_linear = nn.Linear(core_out_size, 1)
+
+        shared_policy_args = {
+            "embedding_dim": 512,
+            "use_actor_critic": False,
+            "input_mode": 'atari',
+            "gamma": 0.99,
+            "predict_rewards": True,
+            "value_aggregation": 'softmax',
+            "td_lambda": 0.95,
+            "normalise_state": True,
+        }
+
+        policy = functools.partial(TreeQNPolicy,
+                                   **shared_policy_args,
+                                   transition_fun_name='two_layer',
+                                   transition_nonlin='tanh',
+                                   residual_transition=True,
+                                   tree_depth=2)
 
         self.action_parameterization = self.get_action_parameterization(core_out_size)
 
         self.apply(self.initialize_weights)
+
+        self.critic_linear = policy(action_space)
+
         self.train()  # eval() for inference?
 
     def forward_head(self, obs_dict):
