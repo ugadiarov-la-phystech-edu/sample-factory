@@ -68,6 +68,8 @@ def crafter_extra_summaries(policy_id, policy_avg_stats, env_steps, summary_writ
     log.debug(f'length_mean: {round(float(length_mean), 3)}')
     summary_writer.add_scalar('length_mean', length_mean, env_steps)
 
+    summary_writer.add_scalar('step', env_steps, env_steps)
+
 
 def register_custom_components():
     global_env_registry().register_env(
