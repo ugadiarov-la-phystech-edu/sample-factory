@@ -46,6 +46,12 @@ def add_doom_env_eval_args(parser):
         type=str,
         help="Record episodes to this folder. This records a demo that can be replayed at full resolution. Currently, this does not work for bot environments so it is recommended to use --save_video to record episodes at lower resolution instead for such environments",
     )
+    parser.add_argument(
+        "--greedy_epsilon",
+        default=0,
+        type=float,
+        help="Greedy epsilon for evaluation"
+    )
 
 
 def doom_override_defaults(parser):

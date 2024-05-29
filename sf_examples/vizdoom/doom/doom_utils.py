@@ -288,6 +288,7 @@ def make_doom_env_impl(
     resolution = custom_resolution
     if resolution is None:
         resolution = "256x144" if cfg.wide_aspect_ratio else "160x120"
+        resolution = "256x144" if cfg.wide_aspect_ratio else "320x240"
 
     assert resolution in resolutions
     env = SetResolutionWrapper(env, resolution)  # default (wide aspect ratio)

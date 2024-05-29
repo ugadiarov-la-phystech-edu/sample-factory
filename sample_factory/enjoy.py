@@ -1,5 +1,6 @@
 import time
 from collections import deque
+import random
 from typing import Dict, Tuple
 
 import gymnasium as gym
@@ -98,6 +99,7 @@ def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
     cfg.num_envs = 1
 
     render_mode = "human"
+    render_mode = "rgb_array"
     if cfg.save_video:
         render_mode = "rgb_array"
     elif cfg.no_render:
@@ -161,6 +163,11 @@ def enjoy(cfg: Config) -> Tuple[StatusCode, float]:
             # actions shape should be [num_agents, num_actions] even if it's [1, 1]
             if actions.ndim == 1:
                 actions = unsqueeze_tensor(actions, dim=-1)
+
+            if random.random() <= cfg.greedy_epsilon:
+                for i in range(actions.size()[1]):
+                    actions[0, i] = env.action_space[i].sample().item()
+
             actions = preprocess_actions(env_info, actions)
 
             rnn_states = policy_outputs["new_rnn_states"]
